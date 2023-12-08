@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func dfs(n *node, fn func(n *node)) {
+func dfs(n *Node, fn func(n *Node)) {
 	fn(n)
 	for _, v := range n.children {
 		dfs(v, fn)
@@ -18,7 +18,7 @@ func Test_insert(t *testing.T) {
 	root.insert("/role/user/:id")
 
 	count := 0
-	dfs(root, func(n *node) {
+	dfs(root, func(n *Node) {
 		log.Printf("dfs node part: %s, param:%s, pattern: %s \n", n.part, n.param, n.pattern)
 		count++
 	})
@@ -33,26 +33,23 @@ func Test_match(t *testing.T) {
 	root.insert("/role/user/:id")
 	root.insert("/company/:cid/user/:uid")
 
-	_, ok := root.match("/", nil)
+	_, ok := root.match("/")
 	if !ok {
 		t.Error("match root error")
 		return
 	}
 
-	params := make(map[string]string, 1)
-	pattern, ok := root.match("/user/1", params)
+	data, ok := root.match("/user/1")
 	if !ok {
 		t.Error("match root error")
 		return
 	}
-	log.Printf("match /user/1 pattern: %v, params: %v", pattern, params)
+	log.Printf("match /user/1 pattern: %v, params: %v", data.node.pattern, data.params)
 
-	params = make(map[string]string, 1)
-	pattern, ok = root.match("/company/123/user/456", params)
+	data, ok = root.match("/company/123/user/456")
 	if !ok {
 		t.Error("match root error")
 		return
 	}
-	log.Printf("match /company/123/user/456 pattern: %v, params: %v", pattern, params)
-
+	log.Printf("match /company/123/user/456 pattern: %v, params: %v", data.node.pattern, data.params)
 }

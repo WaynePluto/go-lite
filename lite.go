@@ -6,13 +6,12 @@ import (
 )
 
 type Engine struct {
-	router *router
+	router *Router
 }
 
 func (engine *Engine) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	c := newContext(w, r)
 	engine.router.handle(c)
-
 }
 
 func New() *Engine {
@@ -21,6 +20,20 @@ func New() *Engine {
 
 func (engine *Engine) addRoute(method string, pattern string, handler HandlerFunc) {
 	engine.router.addRoute(method, pattern, handler)
+}
+
+func (engine *Engine) Use(pattern string, handler HandlerFunc) {
+	matchData, ok := engine.router.root.match(pattern)
+
+	if ok {
+		matchData.node.addMiddleware(handler)
+	} else {
+		node, err := engine.router.root.insert(pattern)
+		if err != nil {
+			return
+		}
+		node.addMiddleware(handler)
+	}
 }
 
 func (engine *Engine) GET(pattern string, handler HandlerFunc) {

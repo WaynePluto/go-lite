@@ -18,6 +18,10 @@ type Context struct {
 	Path   string
 	Method string
 	Params map[string]string
+	// middleware
+	handlers []HandlerFunc
+	// middleware index
+	index int
 }
 
 func newContext(w http.ResponseWriter, r *http.Request) *Context {
@@ -59,4 +63,13 @@ func (c *Context) GetReqBody() (any, error) {
 		return nil, err
 	}
 	return body, nil
+}
+
+func (c *Context) Next() {
+	s := len(c.handlers)
+	for ; c.index < s; c.index++ {
+		if c.handlers[c.index] != nil {
+			c.handlers[c.index](c)
+		}
+	}
 }

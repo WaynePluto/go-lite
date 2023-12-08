@@ -4,6 +4,11 @@ import "github.com/WaynePluto/go-lite"
 
 func main() {
 	l := lite.New()
+
+	l.Use("/ping/:id", func(ctx *lite.Context) {
+		ctx.Params["test"] = "test"
+	})
+
 	l.GET("/", func(c *lite.Context) {
 		c.JSON("Hello,world")
 	})
@@ -22,5 +27,6 @@ func main() {
 		}
 		ctx.JSON(body)
 	})
+
 	l.Run(":8000")
 }
