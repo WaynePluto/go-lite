@@ -1,6 +1,6 @@
 package main
 
-import "github.com/WaynePluto/go-lite/lite"
+import "github.com/WaynePluto/go-lite"
 
 func main() {
 	l := lite.New()
