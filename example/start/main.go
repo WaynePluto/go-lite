@@ -1,8 +1,6 @@
 package main
 
-import (
-	lite "lite/core"
-)
+import "github.com/WaynePluto/go-lite/lite"
 
 func main() {
 	l := lite.New()
@@ -22,9 +20,7 @@ func main() {
 		if err != nil {
 			return
 		}
-
 		ctx.JSON(body)
 	})
 	l.Run(":8000")
-
 }
