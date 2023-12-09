@@ -1,7 +1,7 @@
 package lite
 
 import (
-	"fmt"
+	"log"
 	"net/http"
 )
 
@@ -23,17 +23,7 @@ func (engine *Engine) addRoute(method string, pattern string, handler HandlerFun
 }
 
 func (engine *Engine) Use(pattern string, handler HandlerFunc) {
-	matchData, ok := engine.router.root.match(pattern)
-
-	if ok {
-		matchData.node.addMiddleware(handler)
-	} else {
-		node, err := engine.router.root.insert(pattern)
-		if err != nil {
-			return
-		}
-		node.addMiddleware(handler)
-	}
+	engine.router.Use(pattern, handler)
 }
 
 func (engine *Engine) GET(pattern string, handler HandlerFunc) {
@@ -44,7 +34,19 @@ func (engine *Engine) POST(pattern string, handler HandlerFunc) {
 	engine.addRoute("POST", pattern, handler)
 }
 
+func (engine *Engine) PUT(pattern string, handler HandlerFunc) {
+	engine.addRoute("PUT", pattern, handler)
+}
+
+func (engine *Engine) PATCH(pattern string, handler HandlerFunc) {
+	engine.addRoute("PATCH", pattern, handler)
+}
+
+func (engine *Engine) DELETE(pattern string, handler HandlerFunc) {
+	engine.addRoute("DELETE", pattern, handler)
+}
+
 func (engine *Engine) Run(addr string) error {
-	fmt.Printf("server start at: %v\n", addr)
+	log.Printf("server start at: %v\n", addr)
 	return http.ListenAndServe(addr, engine)
 }

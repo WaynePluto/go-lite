@@ -3,147 +3,117 @@ package lite
 import (
 	"errors"
 	"log"
-	"strings"
+
+	"github.com/WaynePluto/go-lite/utils"
 )
 
+// 路由节点，比如 /user/:id 有三个节点，分别是 /, user, :id
 type Node struct {
-	// 节点的匹配模式
-	pattern string
-	// 节点所在部分
-	part string
-	// 动态参数
-	param string
-	// 节点中间件
-	middlewares []HandlerFunc
-
-	children map[string]*Node
+	name      string           // 节点名称，比如 user, 当为动态路径节点时，part为 ":"
+	path      string           // 节点路径, 从根节点到此节点的完整路径, 比如 /user/:id, 用来查找中间件
+	paramName string           // 动态参数名，比如 id
+	children  map[string]*Node // 子节点
 }
 
-func creatRoot() *Node {
-	return &Node{
-		pattern:     "/",
-		middlewares: make([]HandlerFunc, 1),
-		children:    make(map[string]*Node, 1),
-	}
-}
-
+// 根据路径插入路径中所有的节点, 返回末级节点
 func (root *Node) insert(path string) (*Node, error) {
-	if path == "/" {
-		return creatRoot(), nil
+	if root.children == nil {
+		root.children = map[string]*Node{}
 	}
-
-	parts := strings.Split(path, "/")
-	if path[0] == '/' {
-		parts = parts[1:]
-	}
+	parts := utils.SplitPathToParts(path)
 	curNode := root
-	i := 0
-	for curNode != nil && i < len(parts) {
-		part := parts[i]
-		if part == "" {
-			i++
-			continue
+	for i := 0; i < len(parts); i++ {
+		// 需要插入的节点名称
+		curPart := parts[i]
+		if curPart == "" {
+			return nil, errors.New("path error: " + path)
 		}
-
-		key, param := "", ""
-
-		if part[0] == ':' {
-			param = part[1:]
-		} else {
-			key = part
-		}
-		child, ok := curNode.children[key]
-
-		if !ok {
-			child = &Node{
-				part:        key,
-				param:       param,
-				middlewares: make([]HandlerFunc, 1),
-				children:    make(map[string]*Node, 1),
-			}
-			curNode.children[key] = child
-		}
-
-		if param != child.param {
-			log.Printf("动态路由参数：%s已注册为%s", param, child.param)
-		}
-
-		if i == len(parts)-1 {
-			// fmt.Printf("匹配到最后一层：%s\n", child.part)
-			if child.pattern == "" {
-				child.pattern = path
-				return child, nil
+		if curNode.name == curPart {
+			if i == len(parts)-1 {
+				return curNode, nil
 			} else {
-				log.Printf("路由：%s已注册", path)
+				continue
 			}
+		}
+
+		// 查找当前节点的子节点
+		searchName, paramName := curPart, ""
+		if searchName[0] == ':' {
+			searchName, paramName = ":", curPart[1:]
+		}
+		child, ok := curNode.children[searchName]
+		if ok {
+			if child.paramName != paramName {
+				// 错误的动态路由节点定义
+				return nil, errors.New("Duplicate path param node definition:" + paramName)
+			}
+		} else {
+			// 插入新节点
+			child = &Node{
+				name:      searchName,
+				paramName: paramName,
+				path:      curPart,
+				children:  map[string]*Node{},
+			}
+			if curNode.path == "/" {
+				child.path = "/" + child.path
+			} else {
+				child.path = curNode.path + "/" + child.path
+			}
+
+			curNode.children[searchName] = child
 		}
 		curNode = child
-		i++
 	}
-	return nil, errors.New("create node error")
+	return curNode, nil
 }
 
 type matchData struct {
-	node        *Node
-	params      map[string]string
-	middlewares []HandlerFunc
+	node   *Node
+	params map[string]string
 }
 
 // 路由匹配，需要匹配 出最后的节点、所有中间件、所有路径参数
-func (root *Node) match(path string) (data matchData, matched bool) {
-	data = matchData{params: make(map[string]string, 1)}
+func (root *Node) match(path string) (data *matchData, matched bool) {
+	data = &matchData{params: map[string]string{}}
 	matched = false
-	if path == "/" {
-		data.node = root
-		data.middlewares = data.node.middlewares
-		matched = true
-		return
-	}
-	parts := strings.Split(path, "/")
-	if path[0] == '/' {
-		parts = parts[1:]
-	}
+	parts := utils.SplitPathToParts(path)
 	curNode := root
-	i := 0
-	for curNode != nil && i < len(parts) {
+	for i := 0; i < len(parts); i++ {
 		part := parts[i]
-		if part == "" {
-			i++
-			continue
-		}
-		// 匹配静态节点
-		child, ok := curNode.children[part]
-		if !ok {
-			// 未匹配到静态节点，尝试匹配动态节点
-			child, ok = curNode.children[""]
-			if ok {
-				data.params[child.param] = part
+		// 判断当前节点
+		if curNode.name == part {
+			if i == len(parts)-1 {
+				data.node = curNode
+				matched = true
+				return
+			} else {
+				continue
 			}
 		}
+		// 查找当前节点的子节点
+		child, ok := curNode.children[part]
 		if ok {
-			// 匹配成功
-			data.middlewares = append(data.middlewares, child.middlewares...)
-
-			// 匹配完成
+			curNode = child
 			if i == len(parts)-1 {
+				data.node = curNode
 				matched = true
-				data.node = child
-				break
 			}
 		} else {
-			// 匹配失败
-			break
+			// 没有匹配到静态节点，匹配动态节点
+			child, ok = curNode.children[":"]
+			if ok {
+				data.params[child.paramName] = part
+				curNode = child
+				if i == len(parts)-1 {
+					data.node = curNode
+					matched = true
+				}
+			} else {
+				log.Printf("match wrong part：%v\n", part)
+				break
+			}
 		}
-
-		curNode = child
-		i++
 	}
-	return data, matched
-}
-
-func (n *Node) addMiddleware(handler HandlerFunc) {
-	if n.middlewares == nil {
-		n.middlewares = make([]HandlerFunc, 1)
-	}
-	n.middlewares = append(n.middlewares, handler)
+	return
 }

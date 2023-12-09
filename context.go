@@ -30,7 +30,7 @@ func newContext(w http.ResponseWriter, r *http.Request) *Context {
 		Req:    r,
 		Path:   r.URL.Path,
 		Method: r.Method,
-		Params: make(map[string]string, 1),
+		Params: make(map[string]string),
 	}
 }
 

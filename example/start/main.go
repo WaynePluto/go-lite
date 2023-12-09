@@ -12,8 +12,8 @@ func main() {
 	l.GET("/", func(c *lite.Context) {
 		c.JSON("Hello,world")
 	})
-	l.GET("/ping/:id", func(c *lite.Context) {
-		c.JSON(c.Params)
+	l.GET("/ping/:id", func(ctx *lite.Context) {
+		ctx.JSON(ctx.Params)
 	})
 	l.GET("/headers", func(c *lite.Context) {
 		c.JSON(c.Req.Header)
