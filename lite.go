@@ -22,8 +22,8 @@ func (engine *Engine) addRoute(method string, pattern string, handler HandlerFun
 	engine.router.addRoute(method, pattern, handler)
 }
 
-func (engine *Engine) Use(pattern string, handler HandlerFunc) {
-	engine.router.Use(pattern, handler)
+func (engine *Engine) Use(pattern string, handlers ...HandlerFunc) {
+	engine.router.Use(pattern, handlers...)
 }
 
 func (engine *Engine) GET(pattern string, handler HandlerFunc) {

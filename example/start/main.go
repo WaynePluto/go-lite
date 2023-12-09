@@ -1,27 +1,38 @@
 package main
 
-import "github.com/WaynePluto/go-lite"
+import (
+	"github.com/WaynePluto/go-lite"
+)
 
 func main() {
 	l := lite.New()
 
-	l.Use("/ping/:id", func(ctx *lite.Context) {
+	l.Use("/ping", func(ctx *lite.Context) {
 		ctx.Params["test"] = "test"
+		ctx.Next()
 	})
 
-	l.GET("/", func(c *lite.Context) {
-		c.JSON("Hello,world")
+	l.Use("/ping/:id", func(ctx *lite.Context) {
+		ctx.Params["test"] = ""
+		ctx.Next()
+	}, func(ctx *lite.Context) {
+		ctx.Params["test"] = "test"
+		ctx.Next()
+	},
+	)
+
+	l.GET("/", func(ctx *lite.Context) {
+		ctx.JSON("Hello,world")
 	})
 	l.GET("/ping/:id", func(ctx *lite.Context) {
 		ctx.JSON(ctx.Params)
 	})
-	l.GET("/headers", func(c *lite.Context) {
-		c.JSON(c.Req.Header)
+	l.GET("/headers", func(ctx *lite.Context) {
+		ctx.JSON(ctx.Req.Header)
 	})
 
 	l.POST("/", func(ctx *lite.Context) {
 		body, err := ctx.GetReqBody()
-
 		if err != nil {
 			return
 		}

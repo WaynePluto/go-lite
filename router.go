@@ -22,9 +22,9 @@ func newRouter() *Router {
 	}
 }
 
-func (r *Router) Use(pattern string, handler HandlerFunc) {
+func (r *Router) Use(pattern string, handlers ...HandlerFunc) {
 	r.root.insert(pattern)
-	r.middlewares[pattern] = append(r.middlewares[pattern], handler)
+	r.middlewares[pattern] = append(r.middlewares[pattern], handlers...)
 }
 
 func (r *Router) addRoute(method string, pattern string, handler HandlerFunc) {
@@ -49,10 +49,9 @@ func (r *Router) handle(ctx *Context) {
 					middlewares = append(middlewares, ms...)
 				}
 			}
-
 			ctx.Params = matchData.params
 			ctx.handlers = append(middlewares, handler)
-			ctx.index = 0
+			ctx.index = -1
 			ctx.Next()
 		} else {
 			ctx.json(404, "404 NOT FOUND METHOD", "error")
