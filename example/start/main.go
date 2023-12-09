@@ -23,13 +23,13 @@ func main() {
 
 	l.GET("/", func(ctx *lite.Context) {
 		ctx.JSON("Hello,world")
-	})
+	}, nil)
 	l.GET("/ping/:id", func(ctx *lite.Context) {
 		ctx.JSON(ctx.Params)
-	})
+	}, nil)
 	l.GET("/headers", func(ctx *lite.Context) {
 		ctx.JSON(ctx.Req.Header)
-	})
+	}, nil)
 
 	l.POST("/", func(ctx *lite.Context) {
 		body, err := ctx.GetReqBody()

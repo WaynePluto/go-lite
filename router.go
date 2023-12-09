@@ -12,6 +12,7 @@ type Router struct {
 	root        *Node
 	handlers    map[string]HandlerFunc
 	middlewares map[string][]HandlerFunc
+	querys      map[string][]string
 }
 
 func newRouter() *Router {
@@ -19,12 +20,18 @@ func newRouter() *Router {
 		root:        &Node{name: "/", path: "/"},
 		handlers:    map[string]HandlerFunc{},
 		middlewares: map[string][]HandlerFunc{},
+		querys:      map[string][]string{},
 	}
 }
 
 func (r *Router) Use(pattern string, handlers ...HandlerFunc) {
 	r.root.insert(pattern)
 	r.middlewares[pattern] = append(r.middlewares[pattern], handlers...)
+}
+
+func (r *Router) addQuery(method string, pattern string, querys []string) {
+	key := method + "-" + pattern
+	r.querys[key] = querys
 }
 
 func (r *Router) addRoute(method string, pattern string, handler HandlerFunc) {
