@@ -1,32 +1,27 @@
 package main
 
 import (
+	"log"
+
 	"github.com/WaynePluto/go-lite"
 )
 
 func main() {
 	l := lite.New()
 
-	l.Use("/ping", func(ctx *lite.Context) {
-		ctx.Params["test"] = "test"
+	l.Use("/", func(ctx *lite.Context) {
+		log.Printf("path: %v, method: %v", ctx.Path, ctx.Method)
 		ctx.Next()
 	})
 
-	l.Use("/ping/:id", func(ctx *lite.Context) {
-		ctx.Params["test"] = ""
-		ctx.Next()
-	}, func(ctx *lite.Context) {
-		ctx.Params["test"] = "test"
-		ctx.Next()
-	},
-	)
-
 	l.GET("/", func(ctx *lite.Context) {
-		ctx.JSON("Hello,world")
+		ctx.JSON(nil)
 	}, nil)
+
 	l.GET("/ping/:id", func(ctx *lite.Context) {
-		ctx.JSON(ctx.Params)
+		ctx.JSON(ctx.Params["id"])
 	}, nil)
+
 	l.GET("/headers", func(ctx *lite.Context) {
 		ctx.JSON(ctx.Req.Header)
 	}, nil)
