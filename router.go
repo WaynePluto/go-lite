@@ -61,9 +61,9 @@ func (r *Router) handle(ctx *Context) {
 			ctx.index = -1
 			ctx.Next()
 		} else {
-			ctx.json(404, "404 NOT FOUND METHOD")
+			ctx.Json(404, "404 NOT FOUND METHOD")
 		}
 	} else {
-		ctx.json(404, "404 NOT FOUND PATH")
+		ctx.Json(404, "404 NOT FOUND PATH")
 	}
 }

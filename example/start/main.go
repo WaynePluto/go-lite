@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"log"
 
 	"github.com/WaynePluto/go-lite"
@@ -14,8 +15,19 @@ func main() {
 		ctx.Next()
 	})
 
+	l.Use("/", func(ctx *lite.Context) {
+		ctx.Next()
+		if ctx.Err != nil {
+			ctx.Json(500, ctx.Err.Error())
+		}
+	})
+
 	l.GET("/", func(ctx *lite.Context) {
-		ctx.JSON(nil)
+		ctx.JSON(ctx.Query())
+	}, nil)
+
+	l.GET("/err", func(ctx *lite.Context) {
+		ctx.Err = errors.New("test get err")
 	}, nil)
 
 	l.GET("/ping/:id", func(ctx *lite.Context) {
@@ -27,7 +39,7 @@ func main() {
 	}, nil)
 
 	l.POST("/", func(ctx *lite.Context) {
-		body, err := ctx.GetReqBody()
+		body, err := ctx.Body()
 		if err != nil {
 			return
 		}

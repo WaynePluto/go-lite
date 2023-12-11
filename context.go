@@ -12,15 +12,14 @@ type Response struct {
 }
 
 type Context struct {
-	Writer http.ResponseWriter
-	Req    *http.Request
-	Path   string
-	Method string
-	Params map[string]string
-	// middleware
+	Writer   http.ResponseWriter
+	Req      *http.Request
+	Path     string
+	Method   string
+	Params   map[string]string
+	Err      error
 	handlers []HandlerFunc
-	// middleware index
-	index int
+	index    int
 }
 
 func newContext(w http.ResponseWriter, r *http.Request) *Context {
@@ -34,27 +33,28 @@ func newContext(w http.ResponseWriter, r *http.Request) *Context {
 	}
 }
 
-func (c *Context) json(code int, data any) {
+func (c *Context) Json(code int, data any) {
 	resq := Response{code, data}
 	c.Writer.Header().Set("Content-Type", "application/json")
-	c.Writer.WriteHeader(code)
+	c.Writer.WriteHeader(200)
 	json.NewEncoder(c.Writer).Encode(resq)
 }
 
 func (c *Context) JSON(data any) {
-	c.json(http.StatusOK, data)
+	c.Json(http.StatusOK, data)
 }
 
-func (c *Context) Error(code int, data string) {
-	c.json(code, data)
+func (c *Context) Query() map[string][]string {
+	return c.Req.URL.Query()
 }
 
-func (c *Context) GetReqBody() (any, error) {
+// 获取请求参数，不需要再次进行错误处理
+func (c *Context) Body() (any, error) {
 	var body any
 	err := json.NewDecoder(c.Req.Body).Decode(&body)
 	if err != nil {
 		log.Printf("Route %4s - %s", "get body error: ", err.Error())
-		c.json(http.StatusBadRequest, "The body json format is incorrect")
+		c.Json(http.StatusBadRequest, "The body json format is incorrect")
 		return nil, err
 	}
 	return body, nil
