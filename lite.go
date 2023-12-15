@@ -9,9 +9,10 @@ type Engine struct {
 	router *Router
 }
 
+// api接口参数定义
 type ApiParam struct {
-	query []string
-	body  any
+	Query []string
+	Body  map[string]string
 }
 
 func (engine *Engine) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -23,33 +24,40 @@ func New() *Engine {
 	return &Engine{router: newRouter()}
 }
 
-func (engine *Engine) addRoute(method string, pattern string, handler HandlerFunc, query []string) {
+func (engine *Engine) addRoute(method string, pattern string, handler HandlerFunc, apiParam *ApiParam) {
 	engine.router.addRoute(method, pattern, handler)
-	engine.router.addQuery(method, pattern, query)
+	if apiParam != nil {
+		if apiParam.Query != nil {
+			engine.router.addQuery(method, pattern, apiParam.Query)
+		}
+		if apiParam.Body != nil {
+			engine.router.addBody(method, pattern, apiParam.Body)
+		}
+	}
 }
 
 func (engine *Engine) Use(pattern string, handlers ...HandlerFunc) {
 	engine.router.Use(pattern, handlers...)
 }
 
-func (engine *Engine) GET(pattern string, handler HandlerFunc, query []string) {
-	engine.addRoute("GET", pattern, handler, query)
+func (engine *Engine) GET(pattern string, handler HandlerFunc, apiParam *ApiParam) {
+	engine.addRoute("GET", pattern, handler, apiParam)
 }
 
-func (engine *Engine) POST(pattern string, handler HandlerFunc) {
-	engine.addRoute("POST", pattern, handler, nil)
+func (engine *Engine) POST(pattern string, handler HandlerFunc, apiParam *ApiParam) {
+	engine.addRoute("POST", pattern, handler, apiParam)
 }
 
-func (engine *Engine) PUT(pattern string, handler HandlerFunc) {
-	engine.addRoute("PUT", pattern, handler, nil)
+func (engine *Engine) PUT(pattern string, handler HandlerFunc, apiParam *ApiParam) {
+	engine.addRoute("PUT", pattern, handler, apiParam)
 }
 
-func (engine *Engine) PATCH(pattern string, handler HandlerFunc) {
-	engine.addRoute("PATCH", pattern, handler, nil)
+func (engine *Engine) PATCH(pattern string, handler HandlerFunc, apiParam *ApiParam) {
+	engine.addRoute("PATCH", pattern, handler, apiParam)
 }
 
-func (engine *Engine) DELETE(pattern string, handler HandlerFunc) {
-	engine.addRoute("DELETE", pattern, handler, nil)
+func (engine *Engine) DELETE(pattern string, handler HandlerFunc, apiParam *ApiParam) {
+	engine.addRoute("DELETE", pattern, handler, apiParam)
 }
 
 func (engine *Engine) Run(addr string) error {

@@ -13,6 +13,7 @@ type Router struct {
 	handlers    map[string]HandlerFunc
 	middlewares map[string][]HandlerFunc
 	querys      map[string][]string
+	bodys       map[string]any
 }
 
 func newRouter() *Router {
@@ -21,6 +22,7 @@ func newRouter() *Router {
 		handlers:    map[string]HandlerFunc{},
 		middlewares: map[string][]HandlerFunc{},
 		querys:      map[string][]string{},
+		bodys:       map[string]any{},
 	}
 }
 
@@ -32,6 +34,10 @@ func (r *Router) Use(pattern string, handlers ...HandlerFunc) {
 func (r *Router) addQuery(method string, pattern string, querys []string) {
 	key := method + "-" + pattern
 	r.querys[key] = querys
+}
+func (r *Router) addBody(method string, pattern string, body any) {
+	key := method + "-" + pattern
+	r.bodys[key] = body
 }
 
 func (r *Router) addRoute(method string, pattern string, handler HandlerFunc) {

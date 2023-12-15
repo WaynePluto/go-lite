@@ -49,15 +49,15 @@ func (c *Context) Query() map[string][]string {
 }
 
 // 获取请求参数，不需要再次进行错误处理
-func (c *Context) Body() (any, error) {
+func (c *Context) Body() (any, bool) {
 	var body any
 	err := json.NewDecoder(c.Req.Body).Decode(&body)
 	if err != nil {
 		log.Printf("Route %4s - %s", "get body error: ", err.Error())
 		c.Json(http.StatusBadRequest, "The body json format is incorrect")
-		return nil, err
+		return nil, false
 	}
-	return body, nil
+	return body, true
 }
 
 func (c *Context) Next() {

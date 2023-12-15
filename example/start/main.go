@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"github.com/WaynePluto/go-lite"
+	"github.com/WaynePluto/go-lite/middlewares"
 )
 
 func main() {
@@ -15,17 +16,13 @@ func main() {
 		ctx.Next()
 	})
 
-	l.Use("/", func(ctx *lite.Context) {
-		ctx.Next()
-		if ctx.Err != nil {
-			ctx.Json(500, ctx.Err.Error())
-		}
-	})
+	l.Use("/", middlewares.Error(nil))
 
 	l.GET("/", func(ctx *lite.Context) {
 		ctx.JSON(ctx.Query())
 	}, nil)
 
+	// 测试错误处理中间件
 	l.GET("/err", func(ctx *lite.Context) {
 		ctx.Err = errors.New("test get err")
 	}, nil)
@@ -39,12 +36,11 @@ func main() {
 	}, nil)
 
 	l.POST("/", func(ctx *lite.Context) {
-		body, err := ctx.Body()
-		if err != nil {
-			return
+		body, ok := ctx.Body()
+		if ok {
+			ctx.JSON(body)
 		}
-		ctx.JSON(body)
-	})
+	}, nil)
 
 	l.Run(":8000")
 }
